@@ -1,6 +1,6 @@
 # LanguagesViz
 
-Small local viewer for the European Indo-European DendroViz SVG.
+Static GitHub Pages viewer for the European Indo-European DendroViz SVG.
 
 ## Public site
 
@@ -10,25 +10,11 @@ The GitHub Pages workflow publishes the viewer at:
 https://lb930.github.io/LanguagesViz/
 ```
 
-## View locally
-
-Run a static server from the repository root:
-
-```bash
-python3 -m http.server 8000
-```
-
-Then open:
-
-```text
-http://localhost:8000/
-```
-
-The page embeds `SVGs/european_leaf_labels_only.svg` and adds pan/zoom with `svg-pan-zoom`.
-
 ## Recreate the SVG
 
-The SVG is generated with DendroViz from `src/indo_european_without_indo_iranian.nwk`.
+The SVG is generated with DendroViz from `src/indo_european_without_indo_iranian.nwk`, and its tooltip text comes from `svg_title_template`. See [DendroViz](https://github.com/lb930/DendroViz).
+
+For Newick input, DendroViz also needs BioPython installed in the same Python environment.
 
 ```bash
 python3 - <<'PY'
