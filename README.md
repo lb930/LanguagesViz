@@ -7,7 +7,7 @@ Small local viewer for the European Indo-European DendroViz SVG.
 The GitHub Pages workflow publishes the viewer at:
 
 ```text
-https://lb930.github.io/LangiagesViz/
+https://lb930.github.io/LanguagesViz/
 ```
 
 ## View locally
