@@ -26,7 +26,8 @@
     }
 
     #app {
-      position: relative;
+      position: fixed;
+      inset: 0;
       width: 100vw;
       height: 100vh;
     }
@@ -42,12 +43,14 @@
     }
 
     .details {
-      position: fixed;
-      top: max(12px, env(safe-area-inset-top));
-      right: max(12px, env(safe-area-inset-right));
+      position: absolute;
+      top: 12px;
+      right: 12px;
       z-index: 20;
       width: min(280px, calc(100vw - 24px));
       max-width: calc(100vw - 24px);
+      max-height: calc(100vh - 24px);
+      overflow: auto;
       padding: 14px 16px;
       border: 1px solid rgba(148, 163, 184, 0.28);
       border-radius: 12px;
@@ -88,6 +91,7 @@
         right: 10px;
         width: min(240px, calc(100vw - 20px));
         max-width: calc(100vw - 20px);
+        max-height: calc(100vh - 20px);
         padding: 12px 13px;
         font-size: 11px;
       }
