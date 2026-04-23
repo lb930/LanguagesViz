@@ -77,14 +77,14 @@
     #tooltip {
       position: fixed;
       z-index: 5;
-      max-width: 320px;
-      padding: 8px 10px;
-      border-radius: 8px;
+      max-width: 260px;
+      padding: 6px 8px;
+      border-radius: 6px;
       border: 1px solid rgba(148, 163, 184, 0.35);
       background: rgba(15, 23, 42, 0.96);
       color: #f8fafc;
-      font-size: 12px;
-      line-height: 1.3;
+      font-size: 10px;
+      line-height: 1.25;
       box-shadow: var(--shadow);
       pointer-events: none;
       opacity: 0;
@@ -97,6 +97,64 @@
       opacity: 1;
       transform: translate3d(0, 0, 0);
     }
+
+    #tooltip div + div {
+      margin-top: 2px;
+    }
+
+    #tooltip b {
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+
+    .details {
+      position: absolute;
+      right: 16px;
+      top: 16px;
+      z-index: 3;
+      width: min(320px, calc(100vw - 32px));
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .details h1 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .details dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 4px 10px;
+      margin: 0;
+    }
+
+    .details dt {
+      color: var(--muted);
+    }
+
+    .details dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .swatch {
+      display: inline-block;
+      width: 9px;
+      height: 9px;
+      margin-right: 6px;
+      border-radius: 50%;
+      vertical-align: -1px;
+      background: var(--swatch, #64748b);
+    }
   </style>
 </head>
 <body>
@@ -108,37 +166,79 @@
     </div>
     <object id="tree" data="SVGs/european_leaf_labels_only.svg" type="image/svg+xml" aria-label="European Indo-European tree"></object>
     <div id="tooltip" role="tooltip" aria-hidden="true"></div>
+    <aside class="details" aria-live="polite">
+      <h1>Selected Node</h1>
+      <dl>
+        <dt>Group</dt>
+        <dd id="node-group">Select a node</dd>
+        <dt>Family/Language</dt>
+        <dd id="node-label">Select a node</dd>
+        <dt>Depth</dt>
+        <dd id="node-depth">-</dd>
+      </dl>
+    </aside>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
   <script>
     const objectEl = document.getElementById('tree');
-    const tooltip = document.getElementById('tooltip');
     const zoomInButton = document.getElementById('zoom-in');
     const zoomOutButton = document.getElementById('zoom-out');
     const resetButton = document.getElementById('reset');
+    const nodeGroup = document.getElementById('node-group');
+    const nodeLabel = document.getElementById('node-label');
+    const nodeDepth = document.getElementById('node-depth');
+    const tooltip = document.getElementById('tooltip');
     let panZoom = null;
 
-    function visibleTextContent(el) {
-      const texts = Array.from(el.childNodes)
-        .filter((node) => node.nodeType === Node.TEXT_NODE)
-        .map((node) => node.textContent.trim())
-        .filter(Boolean);
-      return texts[texts.length - 1] || el.textContent.trim();
+    function readLegendGroups(svgDoc) {
+      const groups = new Map();
+      svgDoc.querySelectorAll('.legend-swatch').forEach((swatch) => {
+        const label = swatch.nextElementSibling;
+        const colour = swatch.getAttribute('fill');
+        if (colour && label && label.classList.contains('legend-label')) {
+          groups.set(colour.toLowerCase(), label.textContent.trim());
+        }
+      });
+      return groups;
     }
 
-    function nodeLabel(el) {
-      const title = el.querySelector(':scope > title');
-      if (title && title.textContent.trim()) {
-        return title.textContent.trim();
-      }
-      return visibleTextContent(el);
+    function nodeInfo(el, colourGroups) {
+      const colour = (el.dataset.colour || '').toLowerCase();
+      return {
+        colour,
+        group: colourGroups.get(colour) || el.dataset.branchId || 'Unassigned',
+        label: el.dataset.label || 'Unknown',
+        depth: el.dataset.depth || '-',
+      };
     }
 
-    function showTooltip(text, clientX, clientY) {
-      tooltip.textContent = text;
+    function setSelectedNode(info) {
+      nodeGroup.innerHTML = '';
+      const swatch = document.createElement('span');
+      swatch.className = 'swatch';
+      swatch.style.setProperty('--swatch', info.colour || '#64748b');
+      nodeGroup.append(swatch, document.createTextNode(info.group));
+      nodeLabel.textContent = info.label;
+      nodeDepth.textContent = info.depth;
+    }
+
+    function setTooltipLine(label, value) {
+      const line = document.createElement('div');
+      const key = document.createElement('b');
+      key.textContent = `${label}: `;
+      line.append(key, document.createTextNode(value));
+      return line;
+    }
+
+    function showTooltip(info, clientX, clientY) {
+      tooltip.replaceChildren(
+        setTooltipLine('Group', info.group),
+        setTooltipLine('Family/Language', info.label),
+      );
       tooltip.classList.add('visible');
       tooltip.setAttribute('aria-hidden', 'false');
+
       const offset = 14;
       const padding = 12;
       const rect = tooltip.getBoundingClientRect();
@@ -159,13 +259,20 @@
       tooltip.setAttribute('aria-hidden', 'true');
     }
 
-    function bindTooltips(svgDoc) {
-      const nodes = svgDoc.querySelectorAll('circle.node, text.label');
-      nodes.forEach((el) => {
-        const enter = (event) => showTooltip(nodeLabel(el), event.clientX, event.clientY);
-        const move = (event) => showTooltip(nodeLabel(el), event.clientX, event.clientY);
-        el.addEventListener('mouseenter', enter);
-        el.addEventListener('mousemove', move);
+    function bindNodeInteractions(svgDoc) {
+      const colourGroups = readLegendGroups(svgDoc);
+      svgDoc.querySelectorAll('[data-node-id]').forEach((el) => {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', (event) => {
+          event.stopPropagation();
+          setSelectedNode(nodeInfo(el, colourGroups));
+        });
+        el.addEventListener('mouseenter', (event) => {
+          showTooltip(nodeInfo(el, colourGroups), event.clientX, event.clientY);
+        });
+        el.addEventListener('mousemove', (event) => {
+          showTooltip(nodeInfo(el, colourGroups), event.clientX, event.clientY);
+        });
         el.addEventListener('mouseleave', hideTooltip);
       });
       svgDoc.addEventListener('mouseleave', hideTooltip);
@@ -188,7 +295,7 @@
         dblClickZoomEnabled: false,
         preventMouseEventsDefault: true,
       });
-      bindTooltips(svgDoc);
+      bindNodeInteractions(svgDoc);
       zoomInButton.addEventListener('click', () => panZoom.zoomIn());
       zoomOutButton.addEventListener('click', () => panZoom.zoomOut());
       resetButton.addEventListener('click', () => {
