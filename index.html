@@ -74,39 +74,6 @@
       background: rgba(51, 65, 85, 0.96);
     }
 
-    #tooltip {
-      position: fixed;
-      z-index: 5;
-      max-width: 260px;
-      padding: 6px 8px;
-      border-radius: 6px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      background: rgba(15, 23, 42, 0.96);
-      color: #f8fafc;
-      font-size: 10px;
-      line-height: 1.25;
-      box-shadow: var(--shadow);
-      pointer-events: none;
-      opacity: 0;
-      transform: translate3d(0, 4px, 0);
-      transition: opacity 120ms ease, transform 120ms ease;
-      white-space: nowrap;
-    }
-
-    #tooltip.visible {
-      opacity: 1;
-      transform: translate3d(0, 0, 0);
-    }
-
-    #tooltip div + div {
-      margin-top: 2px;
-    }
-
-    #tooltip b {
-      color: #cbd5e1;
-      font-weight: 600;
-    }
-
     .details {
       position: absolute;
       right: 16px;
@@ -165,7 +132,6 @@
       <button id="reset" type="button" title="Reset view">↺</button>
     </div>
     <object id="tree" data="SVGs/european_leaf_labels_only.svg" type="image/svg+xml" aria-label="European Indo-European tree"></object>
-    <div id="tooltip" role="tooltip" aria-hidden="true"></div>
     <aside class="details" aria-live="polite">
       <h1>Selected Node</h1>
       <dl>
@@ -188,7 +154,6 @@
     const nodeGroup = document.getElementById('node-group');
     const nodeLabel = document.getElementById('node-label');
     const nodeDepth = document.getElementById('node-depth');
-    const tooltip = document.getElementById('tooltip');
     let panZoom = null;
 
     function readLegendGroups(svgDoc) {
@@ -223,42 +188,6 @@
       nodeDepth.textContent = info.depth;
     }
 
-    function setTooltipLine(label, value) {
-      const line = document.createElement('div');
-      const key = document.createElement('b');
-      key.textContent = `${label}: `;
-      line.append(key, document.createTextNode(value));
-      return line;
-    }
-
-    function showTooltip(info, clientX, clientY) {
-      tooltip.replaceChildren(
-        setTooltipLine('Group', info.group),
-        setTooltipLine('Family/Language', info.label),
-      );
-      tooltip.classList.add('visible');
-      tooltip.setAttribute('aria-hidden', 'false');
-
-      const offset = 14;
-      const padding = 12;
-      const rect = tooltip.getBoundingClientRect();
-      let x = clientX + offset;
-      let y = clientY + offset;
-      if (x + rect.width + padding > window.innerWidth) {
-        x = Math.max(padding, clientX - rect.width - offset);
-      }
-      if (y + rect.height + padding > window.innerHeight) {
-        y = Math.max(padding, clientY - rect.height - offset);
-      }
-      tooltip.style.left = `${x}px`;
-      tooltip.style.top = `${y}px`;
-    }
-
-    function hideTooltip() {
-      tooltip.classList.remove('visible');
-      tooltip.setAttribute('aria-hidden', 'true');
-    }
-
     function bindNodeInteractions(svgDoc) {
       const colourGroups = readLegendGroups(svgDoc);
       svgDoc.querySelectorAll('[data-node-id]').forEach((el) => {
@@ -267,15 +196,7 @@
           event.stopPropagation();
           setSelectedNode(nodeInfo(el, colourGroups));
         });
-        el.addEventListener('mouseenter', (event) => {
-          showTooltip(nodeInfo(el, colourGroups), event.clientX, event.clientY);
-        });
-        el.addEventListener('mousemove', (event) => {
-          showTooltip(nodeInfo(el, colourGroups), event.clientX, event.clientY);
-        });
-        el.addEventListener('mouseleave', hideTooltip);
       });
-      svgDoc.addEventListener('mouseleave', hideTooltip);
     }
 
     objectEl.addEventListener('load', () => {
@@ -293,7 +214,7 @@
         maxZoom: 30,
         zoomScaleSensitivity: 0.25,
         dblClickZoomEnabled: false,
-        preventMouseEventsDefault: true,
+        preventMouseEventsDefault: false,
       });
       bindNodeInteractions(svgDoc);
       zoomInButton.addEventListener('click', () => panZoom.zoomIn());
