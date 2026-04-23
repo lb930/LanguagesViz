@@ -41,39 +41,6 @@
       background: transparent;
     }
 
-    .toolbar {
-      position: absolute;
-      top: 16px;
-      left: 16px;
-      z-index: 3;
-      display: flex;
-      gap: 8px;
-      padding: 10px;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      background: var(--panel);
-      backdrop-filter: blur(12px);
-      box-shadow: var(--shadow);
-    }
-
-    .toolbar button {
-      appearance: none;
-      border: 1px solid rgba(148, 163, 184, 0.22);
-      background: rgba(30, 41, 59, 0.92);
-      color: var(--text);
-      border-radius: 8px;
-      width: 36px;
-      height: 36px;
-      font-size: 16px;
-      line-height: 1;
-      cursor: pointer;
-    }
-
-    .toolbar button:hover {
-      border-color: rgba(148, 163, 184, 0.42);
-      background: rgba(51, 65, 85, 0.96);
-    }
-
     .details {
       position: absolute;
       right: 16px;
@@ -126,11 +93,6 @@
 </head>
 <body>
   <div id="app">
-    <div class="toolbar" aria-label="Zoom controls">
-      <button id="zoom-in" type="button" title="Zoom in">+</button>
-      <button id="zoom-out" type="button" title="Zoom out">−</button>
-      <button id="reset" type="button" title="Reset view">↺</button>
-    </div>
     <object id="tree" data="SVGs/european_leaf_labels_only.svg" type="image/svg+xml" aria-label="European Indo-European tree"></object>
     <aside class="details" aria-live="polite">
       <h1>Selected Node</h1>
@@ -148,9 +110,6 @@
   <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
   <script>
     const objectEl = document.getElementById('tree');
-    const zoomInButton = document.getElementById('zoom-in');
-    const zoomOutButton = document.getElementById('zoom-out');
-    const resetButton = document.getElementById('reset');
     const nodeGroup = document.getElementById('node-group');
     const nodeLabel = document.getElementById('node-label');
     const nodeDepth = document.getElementById('node-depth');
@@ -217,13 +176,6 @@
         preventMouseEventsDefault: false,
       });
       bindNodeInteractions(svgDoc);
-      zoomInButton.addEventListener('click', () => panZoom.zoomIn());
-      zoomOutButton.addEventListener('click', () => panZoom.zoomOut());
-      resetButton.addEventListener('click', () => {
-        panZoom.resetZoom();
-        panZoom.center();
-        panZoom.fit();
-      });
     }, { once: true });
   </script>
 </body>
